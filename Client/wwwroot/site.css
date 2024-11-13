@@ -1,0 +1,70 @@
+body {
+    background: rgb(50, 51, 61);
+}
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto;
+}
+
+    .loading-progress circle {
+        fill: none;
+        stroke: #e0e0e0;
+        stroke-width: 0.6rem;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+    }
+
+        .loading-progress circle:last-child {
+            stroke: #1b6ec2;
+            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
+            transition: stroke-dasharray 0.05s ease-in-out;
+        }
+
+.loading-progress-text {
+    position: absolute;
+    text-align: center;
+    font-weight: bold;
+    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+}
+
+    .loading-progress-text:after {
+        content: var(--blazor-load-percentage-text, "Loading");
+    }
+
+.highlighted {
+    background-color: transparent;
+    font-weight: bold;
+    color: var(--mud-palette-warning) !important;
+}
+
+.bold {
+    font-weight: bold;
+    font-size: 150%;
+}
+
+.normal {
+    font-weight: normal;
+}
+
+.TopSpacer {
+    height: 50px;
+}
+
+.align-right input {    /* align the numeric components so that the number is on the right */
+    text-align: right;
+    padding-right: 2em !important;
+}
+
+.vertical-scroll {
+    height: calc(100vh - 50px);
+    overflow-x: scroll;
+    overflow-y: scroll;
+}
+
+.mud-typography-h6 {
+    color: #ffa800 !important;
+}
