@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using FLLSlides.Shared;
 using System;
+using Grpc.Core;
+using System.Linq;
 
 namespace ApiIsolated;
 
@@ -18,6 +20,51 @@ namespace ApiIsolated;
 /// </remarks>
 public partial class API
 {
+    /// <summary>
+    /// Runs the HTTP trigger.
+    /// </summary>
+    /// <param name="req">The HTTP request data.</param>
+    /// <param name="executionContext">The context in which the function is executed.</param>
+    /// <returns>The HTTP response data.</returns>
+    [Function(nameof(GetTemplateDetails))]
+    public static async Task<HttpResponseData> GetTemplateDetails([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req, FunctionContext executionContext)
+    {
+        var sw = Stopwatch.StartNew();
+
+        var logger = executionContext.GetLogger("HttpTrigger1");
+        logger.LogInformation("GetTemplateDetails function processed a request.");
+
+        var request = await req.ReadFromJsonAsync<TemplateRequest>();
+
+        // validate the incoming request
+        ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+        var response = req.CreateResponse(HttpStatusCode.OK);
+
+        // generate the response
+        var tr = new TemplateResponse
+        {
+            Request = request
+        };
+
+        // get files in the templates folder
+        // open each and find all the fields
+        // return the fields
+        var folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
+        var files = Directory.GetFiles(folder, "*.pptx");
+        tr.Templates = files
+            .Select(f => new TemplateDetails
+            {
+                Name = Path.GetFileName(f),
+                Fields = ["Field1", "Field2"]
+            })
+            .ToArray();
+
+        await response.WriteAsJsonAsync(tr);
+        logger.LogMetric("TransactionTimeMS", sw.Elapsed.TotalMilliseconds);
+        return response;
+    }
+
     /// <summary>
     /// Runs the HTTP trigger.
     /// </summary>
@@ -38,18 +85,14 @@ public partial class API
         ArgumentNullException.ThrowIfNull(request, nameof(request));
 
         var response = req.CreateResponse(HttpStatusCode.OK);
-        using var ms = ProcessRequest(request);
-        ms.Position = 0;
-        await ms.CopyToAsync(response.Body);
+        ProcessRequest(request, response.Body);
         logger.LogMetric("TransactionTimeMS", sw.Elapsed.TotalMilliseconds);
         return response;
     }
 
-    private static MemoryStream ProcessRequest(RequestModel request)
+    private static void ProcessRequest(RequestModel request, Stream outstream)
     {
-        var ms = new MemoryStream();
-        using var writer = new StreamWriter(ms);
+        using var writer = new StreamWriter(outstream);
         writer.WriteLine("testing");
-        return ms;
     }
 }
