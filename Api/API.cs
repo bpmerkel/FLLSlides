@@ -7,8 +7,9 @@ using Microsoft.Extensions.Logging;
 using System.IO;
 using FLLSlides.Shared;
 using System;
-using Grpc.Core;
 using System.Linq;
+using System.Text.RegularExpressions;
+using ShapeCrawler;
 
 namespace ApiIsolated;
 
@@ -53,10 +54,25 @@ public partial class API
         var folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
         var files = Directory.GetFiles(folder, "*.pptx");
         tr.Templates = files
-            .Select(f => new TemplateDetails
+            .Select(f =>
             {
-                Name = Path.GetFileName(f),
-                Fields = ["Field1", "Field2"]
+                var pres = new Presentation(f);
+                var fields = pres.Slides
+                    .SelectMany(slide => slide.TextFrames()
+                        .Where(textbox => textbox.Text.Contains("{"))
+                        .SelectMany(textbox => Regex.Matches(textbox.Text, @"\{(.*)\}", RegexOptions.Multiline)
+                            .Cast<Match>()
+                            .Select(m => m.Groups[1].Value)
+                            .ToArray()
+                        )
+                    )
+                    .ToArray();
+                return new TemplateDetails
+                {
+                    Name = Path.GetFileNameWithoutExtension(f),
+                    Filename = Path.GetFileName(f),
+                    Fields = fields
+                };
             })
             .ToArray();
 
