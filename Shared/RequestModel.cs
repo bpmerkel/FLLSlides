@@ -13,9 +13,12 @@ public class RequestModel
     [JsonPropertyName("name")]
     public string Name { get; set; }
 
+    [JsonPropertyName("templateDetails")]
+    public TemplateDetails TemplateDetails { get; set; }
+
     /// <summary>
     /// Gets or sets the array of teams.
     /// </summary>
-    [JsonPropertyName("teams")]
-    public Team[] Teams { get; set; } = [];
+    [JsonPropertyName("substitutions")]
+    public Dictionary<string, string> Substitutions { get; set; } = [];
 }

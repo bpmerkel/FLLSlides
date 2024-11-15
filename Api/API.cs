@@ -108,7 +108,36 @@ public partial class API
 
     private static void ProcessRequest(RequestModel request, Stream outstream)
     {
-        using var writer = new StreamWriter(outstream);
-        writer.WriteLine("testing");
+        var template = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", request.TemplateDetails.Filename);
+        var pres = new Presentation(template);
+        var edits = pres.Slides
+            .SelectMany(slide => slide.TextFrames()
+                .Where(textbox => textbox.Text.Contains("{"))
+                .Select(textbox => new
+                {
+                    textbox,
+                    groups = Regex.Matches(textbox.Text, @"\{(.*)\}", RegexOptions.Multiline)
+                        .Cast<Match>()
+                        .Select(m => m.Groups.Cast<Group>().ToArray())
+                        .ToArray()
+                })
+            )
+            .ToArray();
+
+        foreach (var edit in edits)
+        {
+            foreach (var paragraph in edit.textbox.Paragraphs)
+            {
+                foreach (var group in edit.groups)
+                {
+                    var find = group[0].Value;
+                    var key = group[1].Value;
+                    var replacement = request.Substitutions.TryGetValue(key, out string sub) ? sub : string.Empty;
+                    paragraph.ReplaceText(find, replacement);
+                }
+            }
+        }
+
+        pres.SaveAs(outstream);
     }
 }
