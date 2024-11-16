@@ -139,7 +139,7 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
                 if (templates.Templates.Length != 0 && Profile.Name == null)
                 {
                     Profile = templates.Templates.First();
-                    ShouldRender();
+                    StateHasChanged();
                 }
             }
         }
