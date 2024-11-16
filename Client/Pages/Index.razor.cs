@@ -49,6 +49,8 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
         Profile = value;
     }
 
+    private Dictionary<string, MudAutocomplete<Team>> autocompletes = [];
+
     private readonly Dictionary<string, string> subs = [];
     private void DoFieldValueSelected(string field, Team team)
     {
@@ -69,7 +71,7 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
             .Select(t => t.Split(",;\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             .Select(pair => new Team { Number = Convert.ToInt32(pair[0]), Name = pair[1] })
             .ToList();
-        teams.Add(new Team { Name = "Other", Number = 0 });
+        teams.Insert(0, new Team { Name = "Other (enter value to the right) --->", Number = 0 });
         return await Task.FromResult(teams
             .Where(t => value == null || t.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
             .AsEnumerable());
