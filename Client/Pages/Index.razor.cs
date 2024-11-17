@@ -3,7 +3,7 @@ namespace FLLSlides.Pages;
 /// <summary>
 /// Represents the main page of the application.
 /// </summary>
-public partial class Index : IBrowserViewportObserver, IAsyncDisposable
+public partial class Index
 {
     /// <summary>
     /// Gets or sets the dialog service.
@@ -11,14 +11,11 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
     [Inject] private IDialogService DialogService { get; set; }
 
     /// <summary>
-    /// Gets or sets the browser viewport service.
-    /// </summary>
-    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
-
-    /// <summary>
     /// Gets or sets the HTTP client factory.
     /// </summary>
     [Inject] private IHttpClientFactory ClientFactory { get; set; }
+
+    [Inject] IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
 
     /// <summary>
     /// Gets or sets the profile.
@@ -29,11 +26,6 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
     /// Gets or sets the teams.
     /// </summary>
     private string Teams { get; set; } = string.Join(Environment.NewLine, Enumerable.Range(1001, 24).Select(i => $"{i:0000}, team {i:0000}"));
-
-    /// <summary>
-    /// Gets the list of errors.
-    /// </summary>
-    private List<string> Errors { get; init; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether the schedule is being generated.
@@ -49,7 +41,7 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
         Profile = value;
     }
 
-    private Dictionary<string, MudAutocomplete<Team>> autocompletes = [];
+    private readonly Dictionary<string, MudAutocomplete<Team>> autocompletes = [];
 
     private readonly Dictionary<string, string> subs = [];
     private void DoFieldValueSelected(string field, Team team)
@@ -85,48 +77,22 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
         Generating = true;
         await Task.Run(async () =>
         {
-            await GenerateDeck();
+            var httpClient = ClientFactory.CreateClient("API");
+            using var response = await httpClient.PostAsJsonAsync("api/GenerateDeck", new RequestModel
+            {
+                Name = Profile.Name,
+                TemplateDetails = Profile,
+                Substitutions = subs
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                await BlazorDownloadFileService.DownloadFile("Slides.pptx", bytes, "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+            }
             Generating = false;
         });
     }
-
-    /// <summary>
-    /// Reloads the server data.
-    /// </summary>
-    private async Task GenerateDeck()
-    {
-        if (!ConfigIsValid())
-        {
-            return;
-        }
-
-        var httpClient = ClientFactory.CreateClient("API");
-        using var response = await httpClient.PostAsJsonAsync("api/GenerateDeck", new RequestModel
-        {
-            Name = Profile.Name,
-            TemplateDetails = Profile,
-            Substitutions = subs
-        });
-
-        if (response.IsSuccessStatusCode)
-        {
-            var bytes = await response.Content.ReadAsByteArrayAsync();
-            await BlazorDownloadFileService.DownloadFile("Slides.pptx", bytes, "application/powerpoint");
-        }
-    }
-
-    /// <summary>
-    /// Validates the configuration.
-    /// </summary>
-    /// <returns>True if the configuration is valid; otherwise, false.</returns>
-    private bool ConfigIsValid()
-    {
-        Errors.Clear();
-        if (Profile == null) Errors.Add("Invalid configuration");
-        return Errors.Count == 0;
-    }
-
-    [Inject] IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
 
     private TemplateResponse templates;
     private async Task<IEnumerable<TemplateDetails>> IdentifyProfiles(string value, CancellationToken token)
@@ -134,7 +100,7 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
         if (templates == null)
         {
             var httpClient = ClientFactory.CreateClient("API");
-            using var response = await httpClient.PostAsJsonAsync("api/GetTemplateDetails", new TemplateRequest { Name = "Web UI" });
+            using var response = await httpClient.PostAsJsonAsync("api/GetTemplateDetails", new TemplateRequest { Name = "Web UI" }, token);
             if (response.IsSuccessStatusCode)
             {
                 templates = await response.Content.ReadFromJsonAsync<TemplateResponse>(token);
@@ -157,7 +123,6 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
     {
         if (firstRender)
         {
-            await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
             var _ = IdentifyProfiles(null, CancellationToken.None);   // perform pre-cache API call of templates, don't wait on it
             OpenWelcomeDialog();
         }
@@ -176,37 +141,4 @@ public partial class Index : IBrowserViewportObserver, IAsyncDisposable
         Position = DialogPosition.Center,
         CloseOnEscapeKey = true
     });
-
-    /// <summary>
-    /// Gets the ID of the browser viewport observer.
-    /// </summary>
-    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
-
-    /// <summary>
-    /// Gets the resize options of the browser viewport observer.
-    /// </summary>
-    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
-    {
-        ReportRate = 1000,
-        NotifyOnBreakpointOnly = false
-    };
-
-    /// <summary>
-    /// Notifies the browser viewport change.
-    /// </summary>
-    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs browserViewportEventArgs)
-    {
-        //_width = browserViewportEventArgs.BrowserWindowSize.Width;
-        //_height = browserViewportEventArgs.BrowserWindowSize.Height;
-        return InvokeAsync(StateHasChanged);
-    }
-
-    /// <summary>
-    /// Disposes the component.
-    /// </summary>
-    public async ValueTask DisposeAsync()
-    {
-        await BrowserViewportService.UnsubscribeAsync(this);
-        GC.SuppressFinalize(this);
-    }
 }

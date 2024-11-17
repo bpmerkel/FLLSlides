@@ -29,22 +29,13 @@
             <MudItem xs="12" lg="9">
                 <MudText Typo="Typo.h6">Presentation Details</MudText>
                 <MudAutocomplete Value="Profile" ValueChanged="DoProfileSelected" T="TemplateDetails" Strict="false"
-                    SearchFunc="IdentifyProfiles" ToStringFunc="@(e => e==null ? null : e.Name)"
+                    SearchFunc="IdentifyProfiles" ToStringFunc="@(e => e==null ? null : $"{e.Name} ({e.Fields.Length} fields)")"
                     Variant="Variant.Outlined"
                     Label="Choose an awards presentation template"
                     Placeholder="Choose an awards presentation template"
                     InputMode="InputMode.text"
                     Dense="true"
                     Clearable="false" />
-
-                @if (Errors.Any())
-                {
-                    <MudText Typo="Typo.h6">Errors</MudText>
-                    @foreach (var error in Errors)
-                    {
-                        <MudText Typo="Typo.body1" Color="Color.Error">@error</MudText>
-                    }
-                }
 
                 @foreach (var field in Profile.Fields)
                 {

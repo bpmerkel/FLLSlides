@@ -1,5 +1,6 @@
 body {
     background: rgb(50, 51, 61);
+    font-family: Roboto;
 }
 
 .loading-progress {
@@ -28,6 +29,7 @@ body {
     position: absolute;
     text-align: center;
     font-weight: bold;
+    color: #FFF;
     inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
 }
 
