@@ -15,59 +15,134 @@ public partial class Index
     /// </summary>
     [Inject] private IHttpClientFactory ClientFactory { get; set; }
 
-    [Inject] IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
+    /// <summary>
+    /// Gets or sets the Blazor download file service.
+    /// </summary>
+    [Inject] private IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
 
     /// <summary>
-    /// Gets or sets the profile.
+    /// Gets or sets the template details.
     /// </summary>
-    private TemplateDetails Profile { get; set; } = new TemplateDetails();
+    private TemplateDetails Template { get; set; } = new TemplateDetails();
 
     /// <summary>
     /// Gets or sets the teams.
     /// </summary>
-    private string Teams { get; set; } = string.Join(Environment.NewLine, Enumerable.Range(1001, 24).Select(i => $"{i:0000}, team {i:0000}"));
+    private List<Team> Teams { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the schedule is being generated.
     /// </summary>
     private bool Generating { get; set; } = false;
 
-    /// <summary>
-    /// Handles the profile selection.
-    /// </summary>
-    /// <param name="value">The selected profile.</param>
-    private void DoProfileSelected(TemplateDetails value)
+    private string GetDefaultTeamText()
     {
-        Profile = value;
+        var teamsText = Teams.Count > 0
+            ? string.Join(Environment.NewLine, Teams.Where(t => t.Number > 0).Select(t => $"{t.Number:0000}, {t.Name}"))
+            : string.Join(Environment.NewLine, Enumerable.Range(1001, 24).Select(i => $"{i:0000}, team {i:0000}"));
+        DoSetTeams(teamsText);
+        return teamsText;
     }
 
+    private void DoSetTeams(string teamsText)
+    {
+        Teams = teamsText
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(t => t.Split(",;\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Select(pair => new Team { Number = Convert.ToInt32(pair[0]), Name = pair[1] })
+            .ToList();
+        Teams.Insert(0, OtherTeam);
+    }
+
+    /// <summary>
+    /// Stores the prior team selections.
+    /// </summary>
+    private readonly Dictionary<string, Team> prior = [];
+
+    /// <summary>
+    /// Handles the template selection.
+    /// </summary>
+    /// <param name="template">The selected template.</param>
+    private void DoTemplateSelected(TemplateDetails template)
+    {
+        if (Template != null && template != null && Template.Name != template.Name)
+        {
+            // capture values of selected fields
+            foreach (var kvp in autocompletes)
+            {
+                prior[kvp.Key] = kvp.Value.Value;
+            }
+            Template = template;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Dictionary to store autocomplete components for teams.
+    /// </summary>
     private readonly Dictionary<string, MudAutocomplete<Team>> autocompletes = [];
 
+    /// <summary>
+    /// Dictionary to store field substitutions.
+    /// </summary>
     private readonly Dictionary<string, string> subs = [];
+
+    /// <summary>
+    /// Gets the default value for a specific field.
+    /// </summary>
+    /// <param name="field">The field name.</param>
+    /// <returns>The default team value.</returns>
+    private Team GetDefaultValue(string field) => prior != null && prior.TryGetValue(field, out Team team)
+        ? team
+        : null;
+
+    /// <summary>
+    /// Gets the other default value for a specific field.
+    /// </summary>
+    /// <param name="field">The field name.</param>
+    /// <returns>The default string value.</returns>
+    private string GetOtherDefaultValue(string field) => subs.TryGetValue(field, out string sub)
+        ? sub
+        : null;
+
+    /// <summary>
+    /// Handles the selection of a team for a specific field.
+    /// </summary>
+    /// <param name="field">The field name.</param>
+    /// <param name="team">The selected team.</param>
     private void DoFieldValueSelected(string field, Team team)
     {
+        prior[field] = team;
         if (team.Number != 0)
         {
             subs[field] = $"{team.Name} ({team.Number})";
         }
     }
 
-    private void DoOtherFieldValueSelected(string field, string value)
+    /// <summary>
+    /// Handles the selection of a value for a specific field.
+    /// </summary>
+    /// <param name="field">The field name.</param>
+    /// <param name="value">The selected value.</param>
+    private void DoOtherFieldValueEntered(string field, string value)
     {
         subs[field] = value.Trim();
     }
 
+    /// <summary>
+    /// Identifies teams based on the input value.
+    /// </summary>
+    /// <param name="value">The input value.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of identified teams.</returns>
     private async Task<IEnumerable<Team>> IdentifyTeams(string value, CancellationToken token)
     {
-        var teams = Teams.Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(t => t.Split(",;\t ".ToCharArray(), 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            .Select(pair => new Team { Number = Convert.ToInt32(pair[0]), Name = pair[1] })
-            .ToList();
-        teams.Insert(0, new Team { Name = "Other (enter value to the right) --->", Number = 0 });
-        return await Task.FromResult(teams
+        return await Task.FromResult(Teams
             .Where(t => value == null || t.Name.Contains(value, StringComparison.InvariantCultureIgnoreCase))
             .AsEnumerable());
     }
+
+    private static readonly Team OtherTeam = new() { Name = "Other (enter value to the right) --->", Number = 0 };
 
     /// <summary>
     /// Generates the resulting PPTX.
@@ -80,8 +155,8 @@ public partial class Index
             var httpClient = ClientFactory.CreateClient("API");
             using var response = await httpClient.PostAsJsonAsync("api/GenerateDeck", new RequestModel
             {
-                Name = Profile.Name,
-                TemplateDetails = Profile,
+                Name = Template.Name,
+                TemplateDetails = Template,
                 Substitutions = subs
             });
 
@@ -94,7 +169,17 @@ public partial class Index
         });
     }
 
+    /// <summary>
+    /// Stores the template response.
+    /// </summary>
     private TemplateResponse templates;
+
+    /// <summary>
+    /// Identifies profiles based on the input value.
+    /// </summary>
+    /// <param name="value">The input value.</param>
+    /// <param name="token">The cancellation token.</param>
+    /// <returns>A list of identified profiles.</returns>
     private async Task<IEnumerable<TemplateDetails>> IdentifyProfiles(string value, CancellationToken token)
     {
         if (templates == null)
@@ -104,9 +189,9 @@ public partial class Index
             if (response.IsSuccessStatusCode)
             {
                 templates = await response.Content.ReadFromJsonAsync<TemplateResponse>(token);
-                if (templates.Templates.Length != 0 && Profile.Name == null)
+                if (templates.Templates.Length != 0 && Template.Name == null)
                 {
-                    Profile = templates.Templates.First();
+                    Template = templates.Templates.First();
                     StateHasChanged();
                 }
             }
@@ -119,6 +204,8 @@ public partial class Index
     /// <summary>
     /// Executes after the component is rendered.
     /// </summary>
+    /// <param name="firstRender">Indicates whether this is the first render.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

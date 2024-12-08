@@ -16,7 +16,9 @@
             <MudItem xs="12" lg="3">
                 <MudText Typo="Typo.h6">Teams</MudText>
                 <MudItem xs="12">
-                    <MudTextField @bind-Value="Teams"
+                    <MudTextField
+                        Value="@(GetDefaultTeamText())"
+                        ValueChanged="@(t => DoSetTeams(t))"
                         T="string"
                         Label="Team Numbers and Names"
                         HelperText="Team number and names, delimited by spaces, tabs, or commas, one team per line"
@@ -28,7 +30,7 @@
 
             <MudItem xs="12" lg="9">
                 <MudText Typo="Typo.h6">Presentation Details</MudText>
-                <MudAutocomplete Value="Profile" ValueChanged="DoProfileSelected" T="TemplateDetails" Strict="false"
+                <MudAutocomplete Value="Template" ValueChanged="DoTemplateSelected" T="TemplateDetails" Strict="false"
                     SearchFunc="IdentifyProfiles" ToStringFunc="@(e => e==null ? null : $"{e.Name} ({e.Fields.Length} fields)")"
                     Variant="Variant.Outlined"
                     Label="Choose an awards presentation template"
@@ -37,15 +39,20 @@
                     Dense="true"
                     Clearable="false" />
 
-                @foreach (var field in Profile.Fields)
+                @foreach (var field in Template.Fields)
                 {
                     <MudGrid Spacing="2">
                         <MudItem xs="12" lg="12">
                             <MudStack Row="true">
-                            <MudAutocomplete ValueChanged="@(t => DoFieldValueSelected(field, t))" T="Team" Strict="false" MaxItems="60"
+                            <MudAutocomplete
+                                Value="@(GetDefaultValue(field))"
+                                ValueChanged="@(t => DoFieldValueSelected(field, t))"
                                 @ref="autocompletes[field]"
+                                T="Team"
                                 SearchFunc="IdentifyTeams"
                                 ToStringFunc="@(t => t == null ? null : t.Number == 0 ? t.Name : $"{t.Name} ({t.Number})")"
+                                Strict="false"
+                                MaxItems="60"
                                 Variant="Variant.Outlined"
                                 Label="@field"
                                 Placeholder="@($"Choose the '{field}' winner, or select Other")"
@@ -55,7 +62,8 @@
                             @if (autocompletes.ContainsKey(field) && autocompletes[field]?.Value?.Number == 0)
                             {
                                 <MudTextField
-                                    ValueChanged="@(v => DoOtherFieldValueSelected(field, v))"
+                                    Value="@(GetOtherDefaultValue(field))"
+                                    ValueChanged="@(v => DoOtherFieldValueEntered(field, v))"
                                     T="string"
                                     Label="Other"
                                     HelperText="Type the award winner if not one of the selectable teams"
