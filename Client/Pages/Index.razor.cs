@@ -28,7 +28,7 @@ public partial class Index
     /// <summary>
     /// Gets or sets the teams.
     /// </summary>
-    private List<Team> Teams { get; set; }
+    private List<Team> Teams { get; set; } = [];
 
     /// <summary>
     /// Gets or sets a value indicating whether the schedule is being generated.
@@ -37,7 +37,7 @@ public partial class Index
 
     private string GetDefaultTeamText()
     {
-        var teamsText = Teams.Count > 0
+        var teamsText = Teams?.Count > 0
             ? string.Join(Environment.NewLine, Teams.Where(t => t.Number > 0).Select(t => $"{t.Number:0000}, {t.Name}"))
             : string.Join(Environment.NewLine, Enumerable.Range(1001, 24).Select(i => $"{i:0000}, team {i:0000}"));
         DoSetTeams(teamsText);
