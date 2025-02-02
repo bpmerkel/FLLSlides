@@ -219,7 +219,7 @@ public partial class Index
     /// <summary>
     /// Opens the welcome dialog.
     /// </summary>
-    private void OpenWelcomeDialog() => DialogService.Show<WelcomeDialog>("Welcome", new DialogOptions
+    private void OpenWelcomeDialog() => DialogService.ShowAsync<WelcomeDialog>("Welcome", new DialogOptions
     {
         MaxWidth = MaxWidth.Large,
         CloseButton = true,
