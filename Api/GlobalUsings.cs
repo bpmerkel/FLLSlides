@@ -1,0 +1,14 @@
+﻿global using System;
+global using System.Diagnostics;
+global using System.Linq;
+global using System.Net;
+global using System.Text.RegularExpressions;
+global using System.Threading.Tasks;
+global using Microsoft.Azure.Functions.Worker;
+global using Microsoft.Azure.Functions.Worker.Http;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Hosting;
+global using Microsoft.Extensions.Logging;
+global using System.IO;
+global using FLLSlides.Shared;
+global using ShapeCrawler;

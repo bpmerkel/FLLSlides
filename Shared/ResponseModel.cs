@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace FLLSlides.Shared;
+﻿namespace FLLSlides.Shared;
 
 /// <summary>
 /// Represents the response model containing request details, context, and generation timestamp.

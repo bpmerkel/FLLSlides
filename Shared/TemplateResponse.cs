@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace FLLSlides.Shared;
+﻿namespace FLLSlides.Shared;
 
 public class TemplateResponse
 {

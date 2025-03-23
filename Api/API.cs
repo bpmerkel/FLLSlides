@@ -1,17 +1,4 @@
-using System.Diagnostics;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.Extensions.Logging;
-using System.IO;
-using FLLSlides.Shared;
-using System;
-using System.Linq;
-using System.Text.RegularExpressions;
-using ShapeCrawler;
-
-namespace ApiIsolated;
+namespace FLLSlides.Api;
 
 /// <summary>
 /// Represents a class that handles HTTP triggers.
@@ -59,7 +46,7 @@ public partial class API
                 var pres = new Presentation(f);
                 var fields = pres.Slides
                     .SelectMany(slide => slide.TextFrames()
-                        .Where(textbox => textbox.Text.Contains("{"))
+                        .Where(textbox => textbox.Text.Contains('{'))
                         .SelectMany(textbox => Regex.Matches(textbox.Text, @"\{(.*)\}", RegexOptions.Multiline)
                             .Cast<Match>()
                             .Select(m => m.Groups[1].Value)
@@ -112,7 +99,7 @@ public partial class API
         var pres = new Presentation(template);
         var edits = pres.Slides
             .SelectMany(slide => slide.TextFrames()
-                .Where(textbox => textbox.Text.Contains("{"))
+                .Where(textbox => textbox.Text.Contains('{'))
                 .Select(textbox => new
                 {
                     textbox,
@@ -138,6 +125,6 @@ public partial class API
             }
         }
 
-        pres.SaveAs(outstream);
+        pres.Save(outstream);
     }
 }

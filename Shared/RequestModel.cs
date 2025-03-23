@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace FLLSlides.Shared;
+﻿namespace FLLSlides.Shared;
 
 /// <summary>
 /// Represents a request model containing event, judging, robot game configurations, and teams.
