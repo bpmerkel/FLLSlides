@@ -45,7 +45,7 @@ public partial class API
             {
                 var pres = new Presentation(f);
                 var fields = pres.Slides
-                    .SelectMany(slide => slide.TextFrames()
+                    .SelectMany(slide => slide.GetTextBoxes()
                         .Where(textbox => textbox.Text.Contains('{'))
                         .SelectMany(textbox => Regex.Matches(textbox.Text, @"\{(.*)\}", RegexOptions.Multiline)
                             .Cast<Match>()
@@ -98,7 +98,7 @@ public partial class API
         var template = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", request.TemplateDetails.Filename);
         var pres = new Presentation(template);
         var edits = pres.Slides
-            .SelectMany(slide => slide.TextFrames()
+            .SelectMany(slide => slide.GetTextBoxes()
                 .Where(textbox => textbox.Text.Contains('{'))
                 .Select(textbox => new
                 {
