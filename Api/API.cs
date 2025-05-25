@@ -43,7 +43,7 @@ public partial class API
         tr.Templates = files
             .Select(f =>
             {
-                var pres = new Presentation(f);
+                using var pres = new Presentation(f);
                 var fields = pres.Slides
                     .SelectMany(slide => slide.GetTextBoxes()
                         .Where(textbox => textbox.Text.Contains('{'))
@@ -101,7 +101,7 @@ public partial class API
     private static void ProcessRequest(RequestModel request, Stream outstream)
     {
         var template = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", request.TemplateDetails.Filename);
-        var pres = new Presentation(template);
+        using var pres = new Presentation(template);
         var edits = pres.Slides
             .SelectMany(slide => slide.GetTextBoxes()
                 .Where(textbox => textbox.Text.Contains('{'))
