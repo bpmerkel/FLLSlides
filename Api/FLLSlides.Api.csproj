@@ -6,6 +6,10 @@
     <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Templates\Awards Ceremony - Full.pptx" />
+    <None Remove="Templates\Awards Ceremony - Short.pptx" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="Templates\Awards Ceremony - Full.pptx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
