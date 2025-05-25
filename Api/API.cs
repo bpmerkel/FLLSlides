@@ -93,6 +93,11 @@ public partial class API
         return response;
     }
 
+    /// <summary>
+    /// Processes the request and generates a PowerPoint presentation.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="outstream"></param>
     private static void ProcessRequest(RequestModel request, Stream outstream)
     {
         var template = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", request.TemplateDetails.Filename);

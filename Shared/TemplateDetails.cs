@@ -1,5 +1,8 @@
 ﻿namespace FLLSlides.Shared;
 
+/// <summary>
+/// Defines the details of a template used in the application.
+/// </summary>
 public class TemplateDetails
 {
     public string Name { get; set; }
