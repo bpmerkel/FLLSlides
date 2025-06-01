@@ -17,5 +17,8 @@ public class TemplateResponse
     [JsonPropertyName("generated")]
     public DateTime GeneratedUtc { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Gets or sets the collection of templates available for use.
+    /// </summary>
     public TemplateDetails[] Templates { get; set; }
 }

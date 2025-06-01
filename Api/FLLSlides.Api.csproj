@@ -26,7 +26,7 @@
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.4" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0" />
-    <PackageReference Include="ShapeCrawler" Version="0.68.1" />
+    <PackageReference Include="ShapeCrawler" Version="0.69.0" />
   </ItemGroup>
   <ItemGroup>
     <None Update="host.json">
