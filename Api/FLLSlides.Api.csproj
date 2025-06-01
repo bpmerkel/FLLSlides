@@ -4,7 +4,7 @@
 		<AzureFunctionsVersion>v4</AzureFunctionsVersion>
 		<OutputType>Exe</OutputType>
 		<PublishTrimmed>true</PublishTrimmed>
-		<TrimMode>Link</TrimMode>
+		<TrimMode>CopyUsed</TrimMode>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Remove="Templates\Awards Ceremony - Full.pptx" />
