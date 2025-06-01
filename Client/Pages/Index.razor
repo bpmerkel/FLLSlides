@@ -59,7 +59,7 @@
                                 InputMode="InputMode.text"
                                 Dense="true"
                                 Clearable="false" />
-                            @if (autocompletes.ContainsKey(field) && autocompletes[field]?.Value?.Number == 0)
+                            @if (autocompletes.ContainsKey(field) && (autocompletes[field]?.Value?.Number ?? 0) == 0)
                             {
                                 <MudTextField
                                     Value="@(GetOtherDefaultValue(field))"
